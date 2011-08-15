@@ -56,7 +56,7 @@ module Sass
       def stylesheet_needs_update?(css_file, template_file, importer = nil)
         template_file = File.expand_path(template_file)
         begin
-          css_mtime = File.mtime(css_file)
+          css_mtime = File.mtime(css_file).to_i
         rescue Errno::ENOENT
           return true
         end
@@ -130,7 +130,7 @@ module Sass
               @dependencies.delete([uri, importer])
               nil
             else
-              mtime
+              mtime.to_i
             end
           end
       end
