@@ -124,13 +124,11 @@ module Sass
 
       def mtime(uri, importer)
         @mtimes[[uri, importer]] ||=
-          begin
-            if mtime = importer.mtime(uri, @options)
-              mtime.to_i
-            else
-              @dependencies.delete([uri, importer])
-              nil
-            end
+          if mtime = importer.mtime(uri, @options)
+            mtime.to_i
+          else
+            @dependencies.delete([uri, importer])
+            nil
           end
       end
 
