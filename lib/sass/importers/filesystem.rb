@@ -28,10 +28,7 @@ module Sass
 
       # @see Base#mtime
       def mtime(name, options)
-        file, s = find_real_file(@root, name)
-        File.mtime(file) if file
-      rescue Errno::ENOENT
-        nil
+        try_mtime(name) || try_mtime(File.join(@root, name))
       end
 
       # @see Base#key
@@ -143,6 +140,11 @@ module Sass
 
       def join(base, path)
         Pathname.new(base).join(path).to_s
+      end
+
+      def try_mtime(path)
+        File.mtime(path)
+      rescue Errno::ENOENT
       end
     end
   end
