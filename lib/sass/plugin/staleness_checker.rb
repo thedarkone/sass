@@ -23,7 +23,27 @@ module Sass
     #   *WARNING*: It is important not to retain the instance for too long,
     #   as its instance-level caches are never explicitly expired.
     class StalenessChecker
-      @dependencies_cache = {}
+      class Cache < Hash
+        alias_method :_get, :[]
+
+        def initialize
+          super() {|h, importer| h.store(importer, {})}
+        end
+
+        def [](importer, uri)
+          super(importer)[uri]
+        end
+
+        def []=(importer, uri, c)
+          _get(importer)[uri] = c
+        end
+
+        def delete(importer, uri)
+          _get(importer).delete(uri)
+        end
+      end
+
+      @dependencies_cache = Cache.new
 
       class << self
         # TODO: attach this to a compiler instance.
@@ -42,7 +62,7 @@ module Sass
         # Entries in the following instance-level caches are never explicitly expired.
         # Instead they are supposed to automaticaly go out of scope when a series of staleness checks
         # (this instance of StalenessChecker was created for) is finished.
-        @mtimes, @dependencies_stale, @parse_trees = {}, {}, {}
+        @mtimes, @dependencies_stale, @parse_trees = Cache.new, Cache.new, Cache.new
         @options = Sass::Engine.normalize_options(options)
       end
 
@@ -108,7 +128,7 @@ module Sass
       private
 
       def dependencies_stale?(uri, importer, css_mtime)
-        timestamps = @dependencies_stale[[uri, importer]] ||= {}
+        timestamps = @dependencies_stale[importer, uri] ||= {}
         timestamps.each_pair do |checked_css_mtime, is_stale|
           if checked_css_mtime <= css_mtime && !is_stale
             return false
@@ -123,21 +143,21 @@ module Sass
       end
 
       def mtime(uri, importer)
-        @mtimes[[uri, importer]] ||=
+        @mtimes[importer, uri] ||=
           if mtime = importer.mtime(uri, @options)
             mtime.to_i
           else
-            @dependencies.delete([uri, importer])
+            @dependencies.delete(importer, uri)
             nil
           end
       end
 
       def dependencies(uri, importer)
-        stored_mtime, dependencies = @dependencies[[uri, importer]]
+        stored_mtime, dependencies = @dependencies[importer, uri]
 
         if !stored_mtime || stored_mtime < mtime(uri, importer)
           dependencies = compute_dependencies(uri, importer)
-          @dependencies[[uri, importer]] = [mtime(uri, importer), dependencies]
+          @dependencies[importer, uri] = [mtime(uri, importer), dependencies]
         end
 
         dependencies
@@ -156,14 +176,15 @@ module Sass
         tree(uri, importer).grep(Tree::ImportNode) do |n|
           next if n.css_import?
           file = n.imported_file
-          key = [file.options[:filename], file.options[:importer]]
-          @parse_trees[key] = file.to_tree
-          key
+          filename = file.options[:filename]
+          file_importer = file.options[:importer]
+          @parse_trees[file_importer, filename] = file.to_tree
+          [filename, file_importer]
         end.compact
       end
 
       def tree(uri, importer)
-        @parse_trees[[uri, importer]] ||= importer.find(uri, @options).to_tree
+        @parse_trees[importer, uri] ||= importer.find(uri, @options).to_tree
       end
     end
   end
