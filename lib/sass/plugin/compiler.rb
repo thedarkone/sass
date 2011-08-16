@@ -163,9 +163,10 @@ module Sass::Plugin
       run_updating_stylesheets individual_files
       Sass::Plugin.checked_for_updates = true
       staleness_checker = StalenessChecker.new(engine_options)
+      global_importer = Sass::Engine.normalize_options(engine_options)[:filesystem_importer].new('.')
 
       individual_files.each do |t, c|
-        if options[:always_update] || staleness_checker.stylesheet_needs_update?(c, t)
+        if options[:always_update] || staleness_checker.stylesheet_needs_update?(c, t, global_importer)
           update_stylesheet(t, c)
         end
       end
@@ -178,7 +179,7 @@ module Sass::Plugin
           name = file.sub(template_dir, nothing)
           css = css_filename(name, css_location)
 
-          if options[:always_update] || staleness_checker.stylesheet_needs_update?(css, file)
+          if options[:always_update] || staleness_checker.stylesheet_needs_update?(css, file, global_importer)
             update_stylesheet file, css
           else
             run_not_updating_stylesheet file, css
