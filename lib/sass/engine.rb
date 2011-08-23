@@ -162,8 +162,13 @@ module Sass
       options[:line_comments] ||= options[:line_numbers]
 
       options[:load_paths] = options[:load_paths].map do |p|
-        next p unless p.is_a?(String) || (defined?(Pathname) && p.is_a?(Pathname))
-        options[:filesystem_importer].new(p.to_s)
+        if p.is_a?(Importers::Base)
+          p
+        elsif p.is_a?(String) || (defined?(Pathname) && p.is_a?(Pathname))
+          options[:filesystem_importer].new(p.to_s)
+        else
+          p
+        end
       end
 
       # Backwards compatibility
