@@ -146,7 +146,7 @@ module Sass
       def _find(dir, name, options)
         cache = options && options[:compile_cache]
         full_filename, syntax = find_real_file(dir, name, cache)
-        return unless full_filename && File.readable?(full_filename)
+        return unless full_filename
 
         options[:syntax] = syntax
         options[:filename] = full_filename
