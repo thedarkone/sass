@@ -4,11 +4,11 @@ class Sass::Tree::Visitors::CheckNesting < Sass::Tree::Visitors::Base
 
   def visit(node)
     if error = (@parent && (
-          try_send("invalid_#{node_name @parent}_child?", @parent, node) ||
-          try_send("invalid_#{node_name node}_parent?", @parent, node))) ||
+          try_send("invalid_#{@parent.node_name}_child?", @parent, node) ||
+          try_send("invalid_#{node.node_name}_parent?", @parent, node))) ||
         (@real_parent && (
-          try_send("invalid_#{node_name @real_parent}_real_child?", @real_parent, node) ||
-          try_send("invalid_#{node_name node}_real_parent?", @real_parent, node)))
+          try_send("invalid_#{@real_parent.node_name}_real_child?", @real_parent, node) ||
+          try_send("invalid_#{node.node_name}_real_parent?", @real_parent, node)))
       raise Sass::SyntaxError.new(error)
     end
     super

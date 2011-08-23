@@ -196,6 +196,33 @@ module Sass
         return res if res
         raise Sass::SyntaxError.new("Unbalanced brackets.", :line => line)
       end
+
+      class << self
+        def setup_node_name!
+          const_set(:NODE_NAME, to_node_name)
+          const_set(:VISIT_METHOD, :"visit_#{const_get(:NODE_NAME)}")
+
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
+            def node_name
+              NODE_NAME
+            end
+
+            def visit_method
+              VISIT_METHOD
+            end
+          RUBY
+        end
+
+        def inherited(subclass)
+          subclass.setup_node_name!
+          super
+        end
+
+        private
+        def to_node_name
+          name.sub(/.*::(.*?)Node$/, '\\1').downcase.freeze
+        end
+      end
     end
   end
 end
