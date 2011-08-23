@@ -1,3 +1,5 @@
+require 'sass/plugin/importer_cache'
+
 module Sass
   module Plugin
     # The class handles `.s[ca]ss` file staleness checks via their mtime timestamps.
@@ -23,27 +25,7 @@ module Sass
     #   *WARNING*: It is important not to retain the instance for too long,
     #   as its instance-level caches are never explicitly expired.
     class StalenessChecker
-      class Cache < Hash
-        alias_method :_get, :[]
-
-        def initialize
-          super() {|h, importer| h.store(importer, {})}
-        end
-
-        def [](importer, uri)
-          super(importer)[uri]
-        end
-
-        def []=(importer, uri, c)
-          _get(importer)[uri] = c
-        end
-
-        def delete(importer, uri)
-          _get(importer).delete(uri)
-        end
-      end
-
-      @dependencies_cache = Cache.new
+      @dependencies_cache = ImporterCache.new
 
       class << self
         # TODO: attach this to a compiler instance.
@@ -62,7 +44,7 @@ module Sass
         # Entries in the following instance-level caches are never explicitly expired.
         # Instead they are supposed to automaticaly go out of scope when a series of staleness checks
         # (this instance of StalenessChecker was created for) is finished.
-        @mtimes, @dependencies_stale, @parse_trees = {}, Cache.new, Cache.new
+        @mtimes, @dependencies_stale, @parse_trees = {}, ImporterCache.new, ImporterCache.new
         @options = Sass::Engine.normalize_options(options)
       end
 
