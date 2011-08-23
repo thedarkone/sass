@@ -353,7 +353,15 @@ module Sass::Plugin
     end
 
     def load_paths(opts = options)
-      (opts[:load_paths] || []) + template_locations
+      _to_uniq_load_paths((opts[:load_paths] || []) + template_locations)
+    end
+
+    def _to_uniq_load_paths(load_paths)
+      uniq_load_paths, included = [], Set.new
+      load_paths.each do |load_path|
+        uniq_load_paths << load_path if included.add?(load_path.to_s)
+      end
+      uniq_load_paths
     end
 
     def template_locations
