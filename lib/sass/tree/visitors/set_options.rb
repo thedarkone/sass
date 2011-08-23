@@ -11,7 +11,7 @@ class Sass::Tree::Visitors::SetOptions < Sass::Tree::Visitors::Base
   end
 
   def visit(node)
-    node.instance_variable_set('@options', @options)
+    node.set_options(@options)
     super
   end
 

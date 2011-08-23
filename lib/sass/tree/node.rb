@@ -60,6 +60,9 @@ module Sass
         @children = []
       end
 
+      attr_writer :options
+      alias_method :set_options, :options=
+
       # Sets the options hash for the node and all its children.
       #
       # @param options [{Symbol => Object}] The options
