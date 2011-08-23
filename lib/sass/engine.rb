@@ -161,15 +161,7 @@ module Sass
       # for quite a long time.
       options[:line_comments] ||= options[:line_numbers]
 
-      options[:load_paths] = options[:load_paths].map do |p|
-        if p.is_a?(Importers::Base)
-          p
-        elsif p.is_a?(String) || (defined?(Pathname) && p.is_a?(Pathname))
-          options[:filesystem_importer].new(p.to_s)
-        else
-          p
-        end
-      end
+      options[:load_paths] = _load_paths_to_importers(options[:load_paths], options)
 
       # Backwards compatibility
       options[:property_syntax] ||= options[:attribute_syntax]
@@ -179,6 +171,18 @@ module Sass
       end
 
       options
+    end
+
+    def self._load_paths_to_importers(load_paths, options)
+      load_paths.map do |p|
+        if p.is_a?(Importers::Base)
+          p
+        elsif p.is_a?(String) || (defined?(Pathname) && p.is_a?(Pathname))
+          options[:filesystem_importer].new(p.to_s)
+        else
+          p
+        end
+      end
     end
 
     # Returns the {Sass::Engine} for the given file.
