@@ -173,12 +173,12 @@ module Sass
       options
     end
 
-    def self._load_paths_to_importers(load_paths, options)
+    def self._load_paths_to_importers(load_paths, options = nil)
       load_paths.map do |p|
         if p.is_a?(Importers::Base)
           p
         elsif p.is_a?(String) || (defined?(Pathname) && p.is_a?(Pathname))
-          options[:filesystem_importer].new(p.to_s)
+          ((options && options[:filesystem_importer]) || DEFAULT_OPTIONS[:filesystem_importer]).new(p.to_s)
         else
           p
         end
