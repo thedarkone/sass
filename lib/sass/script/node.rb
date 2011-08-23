@@ -22,7 +22,7 @@ module Sass::Script
       @options = options
       children.each do |c|
         if c.is_a? Hash
-          c.values.each {|v| v.options = options }
+          c.each_value {|v| v.options = options }
         else
           c.options = options
         end
