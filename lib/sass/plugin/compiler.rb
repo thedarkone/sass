@@ -171,11 +171,11 @@ module Sass::Plugin
       Sass::Plugin.checked_for_updates = true
       staleness_checker = StalenessChecker.new(engine_options)
       global_importer = Sass::Engine.normalize_options(engine_options)[:filesystem_importer].new('.')
-      cache = CompileCache.new
+      compile_options = {:importer => global_importer, :compile_cache => CompileCache.new}
 
       individual_files.each do |t, c|
         if options[:always_update] || staleness_checker.stylesheet_needs_update?(c, t, global_importer)
-          update_stylesheet(t, c, cache)
+          update_stylesheet(t, c, compile_options)
         end
       end
 
@@ -188,7 +188,7 @@ module Sass::Plugin
           css = css_filename(name, css_location)
 
           if options[:always_update] || staleness_checker.stylesheet_needs_update?(css, file, global_importer)
-            update_stylesheet file, css, cache
+            update_stylesheet file, css, compile_options
           else
             run_not_updating_stylesheet file, css
           end
@@ -316,7 +316,7 @@ module Sass::Plugin
 
     private
 
-    def update_stylesheet(filename, css, compile_cache = nil)
+    def update_stylesheet(filename, css, compile_options = {})
       dir = File.dirname(css)
       unless File.exists?(dir)
         run_creating_directory dir
@@ -325,7 +325,7 @@ module Sass::Plugin
 
       begin
         File.read(filename) unless File.readable?(filename) # triggers an error for handling
-        engine_opts = engine_options(:css_filename => css, :filename => filename, :compile_cache => compile_cache)
+        engine_opts = engine_options(compile_options.merge(:css_filename => css, :filename => filename))
         result = Sass::Engine.for_file(filename, engine_opts).render
       rescue Exception => e
         run_compilation_error e, filename, css
