@@ -1,14 +1,28 @@
 # A visitor for checking that all nodes are properly nested.
 class Sass::Tree::Visitors::CheckNesting < Sass::Tree::Visitors::Base
+  class Cache < Hash
+    def store_method(node_name, method_name)
+      self[node_name] = Sass::Tree::Visitors::CheckNesting.new.respond_to?(method_name) ? method_name : false
+    end
+  end
+
+  METHOD_NAME_CACHE = Struct.new(:child, :parent, :real_child, :real_parent).new(
+    Cache.new {|h, node_name| h.store_method(node_name, :"invalid_#{node_name}_child?")},
+    Cache.new {|h, node_name| h.store_method(node_name, :"invalid_#{node_name}_parent?")},
+    Cache.new {|h, node_name| h.store_method(node_name, :"invalid_#{node_name}_real_child?")},
+    Cache.new {|h, node_name| h.store_method(node_name, :"invalid_#{node_name}_real_parent?")}
+  )
+
   protected
 
   def visit(node)
-    if error = (@parent && (
-          try_send("invalid_#{@parent.node_name}_child?", @parent, node) ||
-          try_send("invalid_#{node.node_name}_parent?", @parent, node))) ||
-        (@real_parent && (
-          try_send("invalid_#{@real_parent.node_name}_real_child?", @real_parent, node) ||
-          try_send("invalid_#{node.node_name}_real_parent?", @real_parent, node)))
+    methods = METHOD_NAME_CACHE
+    if error = ((parent = @parent) && (
+          try_invalid_check(methods.child,  parent.node_name, parent, node) ||
+          try_invalid_check(methods.parent, node.node_name,   parent, node))) ||
+        ((real_parent = @real_parent) && (
+          try_invalid_check(methods.real_child,  real_parent.node_name, real_parent, node) ||
+          try_invalid_check(methods.real_parent, node.node_name,        real_parent, node)))
       raise Sass::SyntaxError.new(error)
     end
     super
@@ -126,9 +140,10 @@ class Sass::Tree::Visitors::CheckNesting < Sass::Tree::Visitors::Base
     return false
   end
 
-  def try_send(method, *args, &block)
-    return unless respond_to?(method)
-    send(method, *args, &block)
+  def try_invalid_check(method_cache, key, parent, node)
+    if method = method_cache[key]
+      send(method, parent, node)
+    end
   end
 end
 
