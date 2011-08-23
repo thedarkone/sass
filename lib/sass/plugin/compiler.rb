@@ -373,7 +373,7 @@ module Sass::Plugin
     end
 
     def css_filename(name, path)
-      "#{path}/#{name}".gsub(/\.s[ac]ss$/, '.css')
+      "#{path}/#{name}".sub(/\.s[ac]ss$/, '.css')
     end
   end
 end
