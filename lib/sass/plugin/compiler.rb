@@ -27,9 +27,9 @@ module Sass::Plugin
   # * `:never_update`
   # * `:always_check`
   class Compiler
-    CompileCache = Struct.new(:uri) do
+    CompileCache = Struct.new(:uri, :filename_to_sha) do
       def initialize
-        super(ImporterCache.new)
+        super(ImporterCache.new, {})
       end
     end
 

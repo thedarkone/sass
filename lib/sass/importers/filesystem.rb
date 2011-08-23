@@ -151,7 +151,22 @@ module Sass
         options[:syntax] = syntax
         options[:filename] = full_filename
         options[:importer] = self
-        Sass::Engine.new(File.read(full_filename), options)
+        _make_engine(full_filename, options, cache)
+      end
+
+      def _make_engine(full_filename, options, cache = nil)
+        if cache
+          filename_to_sha = cache.filename_to_sha
+          if sha = filename_to_sha[full_filename]
+            Sass::Engine.for_sha(sha, full_filename, options)
+          else
+            Sass::Engine.for_file(full_filename, options).tap do |engine|
+              filename_to_sha[full_filename] = engine.sha
+            end
+          end
+        else
+          Sass::Engine.for_file(full_filename, options)
+        end
       end
 
       def join(base, path)

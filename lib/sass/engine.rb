@@ -201,11 +201,16 @@ module Sass
       Sass::Engine.new(File.read(filename), options.merge(:filename => filename))
     end
 
+    def self.for_sha(sha, filename, options)
+      new(nil, options.merge(:filename => filename)).tap {|engine| engine.sha = sha}
+    end
+
     # The options for the Sass engine.
     # See {file:SASS_REFERENCE.md#sass_options the Sass options documentation}.
     #
     # @return [{Symbol => Object}]
     attr_reader :options
+    attr_writer :sha
 
     # Creates a new Engine. Note that Engine should only be used directly
     # when compiling in-memory Sass code.
@@ -287,6 +292,10 @@ module Sass
       end
     end
 
+    def sha
+      @sha ||= template ? Digest::SHA1.hexdigest(template) : nil
+    end
+
     private
 
     def _render
@@ -306,7 +315,6 @@ module Sass
       if (@options[:cache] || @options[:read_cache]) &&
           @options[:filename] && @options[:importer]
         key = sassc_key
-        sha = Digest::SHA1.hexdigest(@template)
 
         if root = @options[:cache_store].retrieve(key, sha)
           root.options = @options
@@ -317,10 +325,10 @@ module Sass
       check_encoding!
 
       if @options[:syntax] == :scss
-        root = Sass::SCSS::Parser.new(@template).parse
+        root = Sass::SCSS::Parser.new(template).parse
       else
-        root = Tree::RootNode.new(@template)
-        append_children(root, tree(tabulate(@template)).first, true)
+        root = Tree::RootNode.new(template)
+        append_children(root, tree(tabulate(template)).first, true)
       end
 
       root.options = @options
@@ -336,7 +344,7 @@ module Sass
       root
     rescue SyntaxError => e
       e.modify_backtrace(:filename => @options[:filename], :line => @line)
-      e.sass_template = @template
+      e.sass_template = template
       raise e
     end
 
@@ -344,10 +352,14 @@ module Sass
       @options[:cache_store].key(*@options[:importer].key(@options[:filename], @options))
     end
 
+    def template
+      @template ||= @options[:filename] ? File.read(@options[:filename]) : nil
+    end
+
     def check_encoding!
       return if @checked_encoding
       @checked_encoding = true
-      @template, @original_encoding = check_sass_encoding(@template) do |msg, line|
+      @template, @original_encoding = check_sass_encoding(template) do |msg, line|
         raise Sass::SyntaxError.new(msg, :line => line)
       end
     end
