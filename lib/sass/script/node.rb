@@ -28,6 +28,7 @@ module Sass::Script
         end
       end
     end
+    alias_method :set_options, :options=
 
     # Evaluates the node.
     #
