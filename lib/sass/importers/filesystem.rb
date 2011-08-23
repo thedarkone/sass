@@ -103,7 +103,22 @@ module Sass
       # @param dir [String] The directory relative to which to search.
       # @param name [String] The filename to search for.
       # @return [(String, Symbol)] A filename-syntax pair.
-      def find_real_file(dir, name)
+      def find_real_file(dir, name, cache = nil)
+        if cache
+          uri_cache = cache.uri
+          path = File.expand_path(File.join(dir, name))
+          if v = uri_cache[self, path]
+            v
+          elsif v == false
+          else
+            uri_cache[self, path] = _find_real_file(dir, name) || false
+          end
+        else
+          _find_real_file(dir, name)
+        end
+      end
+
+      def _find_real_file(dir, name)
         for (f,s) in possible_files(remove_root(name))
           path = (dir == ".") ? f : "#{dir}/#{f}"
           if full_path = Dir[path].first
@@ -129,7 +144,8 @@ module Sass
       private
 
       def _find(dir, name, options)
-        full_filename, syntax = find_real_file(dir, name)
+        cache = options && options[:compile_cache]
+        full_filename, syntax = find_real_file(dir, name, cache)
         return unless full_filename && File.readable?(full_filename)
 
         options[:syntax] = syntax
