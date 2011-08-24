@@ -171,10 +171,11 @@ module Sass::Plugin
       Sass::Plugin.checked_for_updates = true
       engine_opts = engine_options
       normalized_options = Sass::Engine.normalize_options(engine_opts)
-      staleness_checker = StalenessChecker.new(normalized_options)
       global_importer = normalized_options[:filesystem_importer].new('.')
       compile_options = {:importer => global_importer, :compile_cache => CompileCache.new,
         :load_paths => normalized_options[:load_paths]}
+      normalized_options.merge!(compile_options)
+      staleness_checker = StalenessChecker.new(normalized_options)
 
       individual_files.each do |t, c|
         if options[:always_update] || staleness_checker.stylesheet_needs_update?(c, t, global_importer)
