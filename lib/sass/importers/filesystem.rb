@@ -62,6 +62,8 @@ module Sass
         end
       end
 
+      EXTENSIONS = {'sass' => :sass, 'scss' => :scss}
+
       # A hash from file extensions to the syntaxes for those extensions.
       # The syntaxes must be `:sass` or `:scss`.
       #
@@ -70,7 +72,7 @@ module Sass
       #
       # @return [{String => Symbol}]
       def extensions
-        {'sass' => :sass, 'scss' => :scss}
+        EXTENSIONS
       end
 
       def each_possible_file(name)
