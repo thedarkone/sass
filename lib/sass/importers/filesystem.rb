@@ -73,21 +73,21 @@ module Sass
         {'sass' => :sass, 'scss' => :scss}
       end
 
-      # Given an `@import`ed path, returns an array of possible
-      # on-disk filenames and their corresponding syntaxes for that path.
-      #
-      # @param name [String] The filename.
-      # @return [Array(String, Symbol)] An array of pairs.
-      #   The first element of each pair is a filename to look for;
-      #   the second element is the syntax that file would be in (`:sass` or `:scss`).
-      def possible_files(name)
+      def each_possible_file(name)
         name = escape_glob_characters(name)
         dirname, basename, extname = split(name)
         sorted_exts = extensions.sort
         syntax = extensions[extname]
 
-        return [["#{dirname}/{_,}#{basename}.#{extensions.invert[syntax]}", syntax]] if syntax
-        sorted_exts.map {|ext, syn| ["#{dirname}/{_,}#{basename}.#{ext}", syn]}
+        if syntax
+          yield "#{dirname}/#{basename}.#{extensions.invert[syntax]}",  syntax
+          yield "#{dirname}/_#{basename}.#{extensions.invert[syntax]}", syntax
+        else
+          sorted_exts.each do |ext, syn|
+            yield "#{dirname}/#{basename}.#{ext}",  syn
+            yield "#{dirname}/_#{basename}.#{ext}", syn
+          end
+        end
       end
 
       def escape_glob_characters(name)
@@ -119,11 +119,11 @@ module Sass
       end
 
       def _find_real_file(dir, name)
-        for (f,s) in possible_files(remove_root(name))
+        each_possible_file(remove_root(name)) do |f, s|
           path = (dir == ".") ? f : "#{dir}/#{f}"
-          if full_path = Dir[path].first
-            full_path.gsub!(REDUNDANT_DIRECTORY,File::SEPARATOR)
-            return full_path, s
+          if File.file?(path)
+            path.gsub!(REDUNDANT_DIRECTORY,File::SEPARATOR)
+            return path, s
           end
         end
         nil
