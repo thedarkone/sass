@@ -326,7 +326,7 @@ module Sass
         key = sassc_key
 
         if root = @options[:cache_store].retrieve(key, sha)
-          root.options = @options
+          root.options.replace(@options)
           return root
         end
       end
