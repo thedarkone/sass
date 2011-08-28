@@ -108,13 +108,12 @@ module Sass
       # @return [(String, Symbol)] A filename-syntax pair.
       def find_real_file(dir, name, cache = nil)
         if cache
-          uri_cache = cache.uri
-          path = File.expand_path(File.join(dir, name))
-          if v = uri_cache[self, path]
+          dir_cache = cache.uri[self, dir] ||= {}
+          if v = dir_cache[name]
             v
           elsif v == false
           else
-            uri_cache[self, path] = _find_real_file(dir, name) || false
+            dir_cache[name] = _find_real_file(dir, name) || false
           end
         else
           _find_real_file(dir, name)
