@@ -78,14 +78,15 @@ module Sass
       def each_possible_file(name)
         name = escape_glob_characters(name)
         dirname, basename, extname = split(name)
-        sorted_exts = extensions.sort
-        syntax = extensions[extname]
+        exts = extensions
+        syntax = exts[extname]
 
         if syntax
-          yield "#{dirname}/#{basename}.#{extensions.invert[syntax]}",  syntax
-          yield "#{dirname}/_#{basename}.#{extensions.invert[syntax]}", syntax
+          inverted = exts.invert
+          yield "#{dirname}/#{basename}.#{inverted[syntax]}",  syntax
+          yield "#{dirname}/_#{basename}.#{inverted[syntax]}", syntax
         else
-          sorted_exts.each do |ext, syn|
+          exts.sort.each do |ext, syn|
             yield "#{dirname}/#{basename}.#{ext}",  syn
             yield "#{dirname}/_#{basename}.#{ext}", syn
           end
