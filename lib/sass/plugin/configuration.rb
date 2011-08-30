@@ -15,6 +15,7 @@ module Sass
           :always_update      => false,
           :always_check       => true,
           :full_exception     => true,
+          :workers            => 1,
           :cache_location     => ".sass-cache"
         }.freeze
       end

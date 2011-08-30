@@ -184,21 +184,11 @@ module Sass::Plugin
         end
       end
 
-      template_location_array.each do |template_location, css_location|
-        template_dir, nothing = template_location.to_s.sub(/\/*$/, '/'), ''
+      updates, no_updates = check_stylesheets(staleness_checker, global_importer)
+      update_template_css_pairs(updates, compile_options)
+      no_updates.each {|file, css| run_not_updating_stylesheet(file, css)}
 
-        Dir.glob(File.join(template_location, "**", "[^_]*.s[ca]ss")).sort.each do |file|
-          # Get the relative path to the file
-          name = file.sub(template_dir, nothing)
-          css = css_filename(name, css_location)
-
-          if options[:always_update] || staleness_checker.stylesheet_needs_update?(css, file, global_importer)
-            update_stylesheet file, css, compile_options
-          else
-            run_not_updating_stylesheet file, css
-          end
-        end
-      end
+      nil
     end
 
     # Watches the template directory (or directories)
@@ -320,6 +310,50 @@ module Sass::Plugin
     end
 
     private
+
+    def update_template_css_pairs(template_css_pairs, compile_options)
+      if template_css_pairs.any?
+        workers_to_use = [template_css_pairs.size, options[:workers]].min
+        forks_to_spin_off = workers_to_use - 1
+        forked = false
+
+        template_css_pairs.in_groups(workers_to_use, false).each_with_index do |job, job_number|
+          do_fork = job_number < forks_to_spin_off
+          forked = true if do_fork
+          run_update_job(job, compile_options, do_fork)
+        end
+
+        Process.wait if forked
+      end
+    end
+
+    def run_update_job(template_css_pairs, compile_options, do_fork = false)
+      send(do_fork ? :fork : :tap) do
+        template_css_pairs.each {|file, css| update_stylesheet(file, css, compile_options)}
+      end
+    end
+
+    def check_stylesheets(staleness_checker, global_importer)
+      updates, no_updates = [], []
+      each_template_css_pair do |file, css|
+        do_update = options[:always_update] || staleness_checker.stylesheet_needs_update?(css, file, global_importer)
+        (do_update ? updates : no_updates) << [file, css]
+      end
+      return updates, no_updates
+    end
+
+    def each_template_css_pair
+      template_location_array.each do |template_location, css_location|
+        template_dir, nothing = template_location.to_s.sub(/\/*$/, '/'), ''
+
+        Dir.glob(File.join(template_location, "**", "[^_]*.s[ca]ss")).sort.each do |file|
+          # Get the relative path to the file
+          name = file.sub(template_dir, nothing)
+
+          yield file, css_filename(name, css_location)
+        end
+      end
+    end
 
     def update_stylesheet(filename, css, compile_options = engine_options)
       dir = File.dirname(css)
