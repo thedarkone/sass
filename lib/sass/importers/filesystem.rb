@@ -14,6 +14,8 @@ module Sass
       #   This importer will import files relative to this path.
       def initialize(root)
         @root = File.expand_path(root)
+        @sorted_exts = extensions.sort
+        @inverted_exts = extensions.invert
       end
 
       # @see Base#find_relative
@@ -82,11 +84,10 @@ module Sass
         syntax = exts[extname]
 
         if syntax
-          inverted = exts.invert
-          yield "#{dirname}/#{basename}.#{inverted[syntax]}",  syntax
-          yield "#{dirname}/_#{basename}.#{inverted[syntax]}", syntax
+          yield "#{dirname}/#{basename}.#{@inverted_exts[syntax]}",  syntax
+          yield "#{dirname}/_#{basename}.#{@inverted_exts[syntax]}", syntax
         else
-          exts.sort.each do |ext, syn|
+          @sorted_exts.each do |ext, syn|
             yield "#{dirname}/#{basename}.#{ext}",  syn
             yield "#{dirname}/_#{basename}.#{ext}", syn
           end
