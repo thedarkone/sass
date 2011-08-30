@@ -172,8 +172,9 @@ module Sass::Plugin
       engine_opts = engine_options
       normalized_options = Sass::Engine.normalize_options(engine_opts)
       global_importer = normalized_options[:filesystem_importer].new('.')
+      cache_chain = Sass::CacheStores::Chain.new(Sass::CacheStores::PureMemory.new, normalized_options[:cache_store])
       compile_options = {:importer => global_importer, :compile_cache => CompileCache.new,
-        :load_paths => normalized_options[:load_paths]}
+        :load_paths => normalized_options[:load_paths], :cache_store => cache_chain}
       normalized_options.merge!(compile_options)
       staleness_checker = StalenessChecker.new(normalized_options)
 
