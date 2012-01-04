@@ -21,7 +21,8 @@ unless defined?(Sass::MERB_LOADED)
           :cache_location    => root + '/tmp/sass-cache',
           :always_check      => env != "production",
           :quiet             => env != "production",
-          :full_exception    => env != "production"
+          :full_exception    => env != "production",
+          :workers           => 1
         }.freeze
       end
     end

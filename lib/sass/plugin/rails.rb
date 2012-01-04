@@ -8,7 +8,8 @@ unless defined?(Sass::RAILS_LOADED)
       opts = {
         :quiet             => Sass::Util.rails_env != "production",
         :full_exception    => Sass::Util.rails_env != "production",
-        :cache_location    => Sass::Util.rails_root + '/tmp/sass-cache'
+        :cache_location    => Sass::Util.rails_root + '/tmp/sass-cache',
+        :workers           => 1
       }
 
       opts.merge!(
