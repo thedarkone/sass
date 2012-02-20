@@ -35,18 +35,13 @@ module Sass::Tree
       @last_else = node
     end
 
-    def _dump(f)
-      Marshal.dump([self.expr, self.else, self.children])
+    def marshal_dump
+      [expr, self.else, children, options]
     end
-
-    def self._load(data)
-      expr, else_, children = Marshal.load(data)
-      node = IfNode.new(expr)
-      node.else = else_
-      node.children = children
-      node.instance_variable_set('@last_else',
-        node.else ? node.else.instance_variable_get('@last_else') : node)
-      node
+    
+    def marshal_load(values)
+      @expr, @else, @children, @options = values
+      @last_else = self.else.instance_variable_get('@last_else') if self.else
     end
   end
 end
