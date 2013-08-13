@@ -33,7 +33,7 @@ module Sass::Tree::Visitors
     # @return [Object] The return value of the `visit_*` method for this node.
     def visit(node)
       visit_method = node.visit_method
-      if self.respond_to?(visit_method)
+      if self.respond_to?(visit_method, true)
         self.send(visit_method, node) {visit_children(node)}
       else
         visit_children(node)
